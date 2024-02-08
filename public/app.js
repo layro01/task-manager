@@ -1,5 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
+
   displayAllTasks();
+
+  // Filter Form Submission
+  const filterForm = document.getElementById('filter-form');
+  filterForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const filterTitle = document.getElementById('filter-title').value;
+
+    if (!filterTitle.trim()) {
+      displayAllTasks();
+      return;
+    }
+
+    try {
+      const response = await fetch(`/tasks/search/${filterTitle}`);
+      if (response.ok) {
+        const tasks = await response.json();
+        displayFilterResults(tasks);
+      } else {
+        console.error('Error filtering tasks:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error filtering tasks:', error);
+    }
+  });
 
   // Add Task Form Submission
   const addTaskForm = document.getElementById('add-task-form');
@@ -58,26 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Search Form Submission
-  const searchForm = document.getElementById('search-form');
-  searchForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    const searchTitle = document.getElementById('search-title').value;
-
-    try {
-      const response = await fetch(`/tasks/search/${searchTitle}`);
-      if (response.ok) {
-        const tasks = await response.json();
-        displaySearchResults(tasks);
-      } else {
-        console.error('Error searching tasks:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error searching tasks:', error);
-    }
-  });
-
   // Task Comment Form Submission
   const commentForm = document.getElementById('comment-form');
   commentForm.addEventListener('submit', async (event) => {
@@ -113,13 +119,35 @@ document.addEventListener('DOMContentLoaded', () => {
 async function displayAllTasks() {
   try {
     const tasks = await fetch('/tasks').then((res) => res.json());
-    const taskList = document.getElementById('task-list');
-    taskList.innerHTML = '';
+    const taskTable = document.getElementById('filtered-task-list').getElementsByTagName('tbody')[0];
+    taskTable.innerHTML = '';
 
     tasks.forEach((task) => {
-      const listItem = document.createElement('li');
-      listItem.textContent = `${task.title} - ${task.description}`;
-      taskList.appendChild(listItem);
+    const row = taskTable.insertRow();
+
+    // Add ID column
+    const idCell = row.insertCell(0);
+    idCell.textContent = task._id;
+
+    // Add Title column
+    const titleCell = row.insertCell(1);
+    titleCell.innerHTML = `<strong>${task.title}</strong>`;
+
+    // Add Description column
+    const descriptionCell = row.insertCell(2);
+    descriptionCell.textContent = task.description;
+
+    // Add Comments column
+    const commentsCell = row.insertCell(3);
+    if (task.comments.length > 0) {
+        const commentsList = document.createElement('ul');
+        task.comments.forEach((comment) => {
+          const commentItem = document.createElement('li');
+          commentItem.textContent = comment.text;
+          commentsList.appendChild(commentItem);
+        });
+        commentsCell.appendChild(commentsList);
+      }
     });
   } catch (error) {
     console.error('Error fetching tasks:', error);
@@ -127,17 +155,27 @@ async function displayAllTasks() {
 }
 
 // Function to display search results
-function displaySearchResults(tasks) {
-  const taskList = document.getElementById('search-result');
-  taskList.innerHTML = '';
+function displayFilterResults(tasks) {
+  const taskTable = document.getElementById('filtered-task-list').getElementsByTagName('tbody')[0];
+  taskTable.innerHTML = '';
 
   tasks.forEach((task) => {
-    const listItem = document.createElement('li');
-    // can be demonstrated by adding the following into a task description:
-    // <button onclick="alert()">Show alert dialog</button>
-    listItem.innerHTML = `(${task._id}) <strong>${task.title}</strong> - ${task.description}`;
-    
-    // Display comments as an indented list
+    const row = taskTable.insertRow();
+
+    // Add ID column
+    const idCell = row.insertCell(0);
+    idCell.textContent = task._id;
+
+    // Add Title column
+    const titleCell = row.insertCell(1);
+    titleCell.innerHTML = `<strong>${task.title}</strong>`;
+
+    // Add Description column
+    const descriptionCell = row.insertCell(2);
+    descriptionCell.textContent = task.description;
+
+    // Add Comments column
+    const commentsCell = row.insertCell(3);
     if (task.comments.length > 0) {
       const commentsList = document.createElement('ul');
       task.comments.forEach((comment) => {
@@ -145,9 +183,7 @@ function displaySearchResults(tasks) {
         commentItem.textContent = comment.text;
         commentsList.appendChild(commentItem);
       });
-      listItem.appendChild(commentsList);
+      commentsCell.appendChild(commentsList);
     }
-
-    taskList.appendChild(listItem);
   });
 }

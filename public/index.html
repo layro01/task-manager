@@ -13,8 +13,26 @@
         <h1>Task Manager</h1>
 
         <div>
-            <h2>All Tasks</h2>
-            <ul id="task-list"></ul>
+            <h2>Task Filter</h2>
+            <form id="filter-form">
+                <input type="text" id="filter-title" placeholder="Filter by task title">
+                <button type="submit" id="filter-button">Filter</button>
+                <p id="filter-result"></p>
+            </form>
+            <div>
+                <h2>Task List</h2>
+                <table id="filtered-task-list">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Comments</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
 
         <div>
@@ -31,32 +49,19 @@
         </div>
 
         <div>
-            <h2>Import Tasks</h2>
-            <form id="import-tasks-form">
-                <textarea id="import-tasks" placeholder="Paste JSON here"></textarea>
-                <button type="submit" id="import-button">Import Tasks</button>
-            </form>
-        </div>
-
-        <div>
-            <h2>Find Task</h2>
-            <form id="search-form">
-                <input type="text" id="search-title" placeholder="Enter title">
-                <button type="submit" id="search-button">Search</button>
-                <p id="search-result"></p>
-            </form>
-            <div>
-                <h2>Found Tasks</h2>
-                <ul id="found-task-list"></ul>
-            </div>
-        </div>
-
-        <div>
             <h2>Add Comment</h2>
             <form id="comment-form">
                 <input type="text" id="comment-task-id" placeholder="Enter Task ID">
                 <textarea id="comment-text" placeholder="Enter comment"></textarea>
                 <button type="submit" id="comment-button">Add Comment</button>
+            </form>
+        </div>
+
+        <div>
+            <h2>Import Tasks</h2>
+            <form id="import-tasks-form">
+                <textarea id="import-tasks" placeholder="Paste JSON here"></textarea>
+                <button type="submit" id="import-button">Import Tasks</button>
             </form>
         </div>
     </div>

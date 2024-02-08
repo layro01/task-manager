@@ -46,7 +46,7 @@ app.post('/tasks', async (req, res) => {
 
     exec(`echo Task added: ${title}`, (error, stdout, stderr) => {
       if (error) {
-        console.error(`Error executing command: ${error}`);
+        console.error(`Error executing this command: ${error}`);
         return;
       }
       console.log(`Command output: ${stdout}`);
@@ -73,7 +73,9 @@ app.post('/import-tasks', async (req, res) => {
 app.get('/tasks/search/:title', async (req, res) => {
   // Exploit with the following to return all rows:
   // ' || 'a'=='a
-  query = { $where: `this.title == '${req.params.title}'` }
+  // query = { $where: `this.title == '${req.params.title}'` }
+  const titleRegex = new RegExp(req.params.title, 'i'); // 'i' for case-insensitive matching
+  const query = { title: { $regex: titleRegex } };  
 
   try {
     const tasks = await Task.find(query);
