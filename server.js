@@ -42,7 +42,7 @@ app.post('/tasks', async (req, res) => {
     // To exploit this, under "Add Task" in the Title field enter the following:
     //      Make the server list files && ls -la
     // If you look at the output log on the server, you can see that it lists the contents of the current working directory.
-    // Of course, you could call much worse terminal commands than ls.
+    // Of course, you could call much more destructive terminal commands than ls.
     exec(`echo Task added: ${title}`, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error executing this command: ${error}`);
