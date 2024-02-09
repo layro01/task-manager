@@ -2,11 +2,11 @@
   {
     "title": "Test Import 3",
     "description": "Test Import 3",
-    "comments": []
+    "comments": [ {"text": "Comment 3-1"} ]
   },
   {
     "title": "Test Import 4",
     "description": "Test Import 4",
-    "comments": []
+    "comments": [ { "text": "Comment 4-1" } ]
   }
 ]

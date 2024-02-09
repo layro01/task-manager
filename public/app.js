@@ -131,6 +131,12 @@ async function displayAllTasks() {
 
     // Add Title column
     const titleCell = row.insertCell(1);
+    // CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')
+    // To exploit this, under "Add Task" in the Title field enter the following:
+    //      Hijacked title... <button onclick="alert('This could have been a keylogger!')">Click me</button>
+    // If you look at the task list, you should see a button next to the task title. Press it, and the browser
+    // will display a text box. This could be used to steal credentials, cookie data, screen scrape or keylog activity
+    // within the website hosting the malicious scripting.   
     titleCell.innerHTML = `<strong>${task.title}</strong>`;
 
     // Add Description column
@@ -139,7 +145,7 @@ async function displayAllTasks() {
 
     // Add Comments column
     const commentsCell = row.insertCell(3);
-    if (task.comments.length > 0) {
+    if (task.comments && task.comments.length > 0) {
         const commentsList = document.createElement('ul');
         task.comments.forEach((comment) => {
           const commentItem = document.createElement('li');
@@ -176,7 +182,7 @@ function displayFilterResults(tasks) {
 
     // Add Comments column
     const commentsCell = row.insertCell(3);
-    if (task.comments.length > 0) {
+    if (task.comments && task.comments.length > 0) {
       const commentsList = document.createElement('ul');
       task.comments.forEach((comment) => {
         const commentItem = document.createElement('li');
