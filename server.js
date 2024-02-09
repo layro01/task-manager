@@ -1,119 +1,134 @@
 const express = require('express');
+const mysql = require('mysql2');
 const bodyParser = require('body-parser');
-const { MongoClient, ObjectId } = require('mongodb');
-const { exec } = require('child_process');
 const serialize = require('node-serialize');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Connection URI
-const uri = 'mongodb://localhost:27017/task_manager';
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 // Middleware
 app.use(express.static('public'));
 app.use(bodyParser.json());
 
-// Routes
-app.get('/tasks', async (req, res) => {
-  try {
-    await client.connect();
-    const db = client.db();
-    const tasks = await db.collection('tasks').find().toArray();
-    res.json(tasks);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  } finally {
-    await client.close();
-  }
+const PORT = process.env.PORT || 3000;
+
+app.use(bodyParser.json());
+
+// MySQL Connection
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  password: 'password',
+  database: 'task_manager'
 });
 
-app.post('/tasks', async (req, res) => {
-  const { title, description } = req.body;
+// Create the database and table on initialization
+connection.connect(err => {
+  if (err) {
+    console.error('Error connecting to MySQL: ' + err.stack);
+    return;
+  }
 
-  try {
-    await client.connect();
-    const db = client.db();
-    const newTask = { title, description };
-    await db.collection('tasks').insertOne(newTask);
+  connection.query('CREATE DATABASE IF NOT EXISTS task_manager', (err) => {
+    if (err) throw err;
+    connection.query('USE task_manager', (err) => {
+      if (err) throw err;
 
-    // CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')
-    // To exploit this, under "Add Task" in the Title field enter the following:
-    //      Make the server list files && ls -la
-    // If you look at the output log on the server, you can see that it lists the contents of the current working directory.
-    // Of course, you could call much more destructive terminal commands than ls.
-    exec(`echo Task added: ${title}`, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error executing this command: ${error}`);
-      }
-      console.log(`Command output: ${stdout}`);
+      const createTableQuery = `
+        CREATE TABLE IF NOT EXISTS tasks (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          description TEXT,
+          comments JSON
+        )
+      `;
+
+      connection.query(createTableQuery, (err) => {
+        if (err) throw err;
+        console.log('Connected to MySQL and initialized database');
+      });
     });
-
-    res.status(201).json(newTask);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  } finally {
-    await client.close();
-  }
+  });
 });
 
-app.post('/import-tasks', async (req, res) => {
-  try {
-    const importedTasksJson = Buffer.from(req.body.tasks, 'base64').toString('utf-8');
+// API Routes
 
-    // CWE-502: Deserialization of Untrusted Data
-    // To exploit this... TODO; show how we can craft a serialized obect that can cause remote code execution.
-    const importedTasks = serialize.unserialize(importedTasksJson);
+// Get all tasks
+app.get('/tasks', (req, res) => {
+  const query = 'SELECT * FROM tasks';
 
-    await client.connect();
-    const db = client.db();
-    await db.collection('tasks').insertMany(importedTasks);
+  connection.query(query, (err, results) => {
+    if (err) throw err;
+    res.json(results);
+  });
+});
 
-    res.status(201).json({ message: 'Tasks imported successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  } finally {
-    await client.close();
-  }
+// Add a task
+app.post('/tasks', (req, res) => {
+  const task = req.body;
+  const query = 'INSERT INTO tasks SET ?';
+
+  connection.query(query, task, (err, result) => {
+    if (err) throw err;
+    res.json({ id: result.insertId, ...task });
+  });
+});
+
+// Update a task
+app.put('/tasks/:id', (req, res) => {
+  const taskId = req.params.id;
+  const updatedTask = req.body;
+  const query = 'UPDATE tasks SET ? WHERE id = ?';
+
+  connection.query(query, [updatedTask, taskId], (err) => {
+    if (err) throw err;
+    res.json({ id: taskId, ...updatedTask });
+  });
+});
+
+// Delete a task
+app.delete('/tasks/:id', (req, res) => {
+  const taskId = req.params.id;
+  const query = 'DELETE FROM tasks WHERE id = ?';
+
+  connection.query(query, taskId, (err) => {
+    if (err) throw err;
+    res.json({ id: taskId, message: 'Task deleted successfully' });
+  });
+});
+
+// Bulk import tasks from base64-encoded JSON data
+app.post('/tasks/import', (req, res) => {
+  const importTasks = Buffer.from(req.body.tasks, 'base64').toString('utf-8');
+  const tasks = serialize.unserialize(importTasks);
+
+  const values = tasks.map(task => [task.title, task.description, JSON.stringify(task.comments)]);
+  const query = 'INSERT INTO tasks (title, description, comments) VALUES ?';
+
+  connection.query(query, [values], (err) => {
+    if (err) throw err;
+    res.json({ message: 'Tasks imported successfully' });
+  });
 });
 
 app.get('/tasks/search/:title', async (req, res) => {
-  const title = req.params.title;
-  const query = { title: { $regex: title, $options: 'i' } }; // Case-insensitive regex
-  // query = { $where: function() { return obj.title == ${req.params.title}; } }
+  const title = '%' + req.params.title + '%';
+  const query = 'SELECT * FROM tasks WHERE title LIKE ?';
 
-  try {
-    await client.connect();
-    const db = client.db();
-    const tasks = await db.collection('tasks').find(query).toArray();
-    res.json(tasks);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  } finally {
-    await client.close();
-  }
+  connection.query(query, [title], (err, results) => {
+    if (err) throw err;
+    res.json(results);
+  });
 });
 
 app.post('/tasks/:id/comments', async (req, res) => {
   const taskId = req.params.id;
   const { comment } = req.body;
+  const query = 'UPDATE tasks SET comments = JSON_SET(coalesce(comments, \'[]\'), \'$[0]\', ?) WHERE id = ?';
 
-  try {
-    await client.connect();
-    const db = client.db();
-    const task = await db.collection('tasks').findOneAndUpdate(
-      { _id: new ObjectId(taskId) },
-      { $push: { comments: { text: comment } } },
-      { returnDocument: 'after' }
-    );
-
-    res.status(201).json({ message: 'Comment added successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  } finally {
-    await client.close();
-  }
+  connection.query(query, [comment, taskId], (err) => {
+    if (err) throw err;
+    res.json({ id: taskId, message: 'Comment added successfully' });
+  });
 });
 
 // Start the server

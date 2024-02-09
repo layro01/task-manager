@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const base64EncodedTasks = btoa(importedTasksJson); // Convert to base64
-      const response = await fetch('/import-tasks', {
+      const response = await fetch('/tasks/import', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -127,7 +127,7 @@ async function displayAllTasks() {
 
     // Add ID column
     const idCell = row.insertCell(0);
-    idCell.textContent = task._id;
+    idCell.textContent = task.id;
 
     // Add Title column
     const titleCell = row.insertCell(1);
@@ -149,7 +149,7 @@ async function displayAllTasks() {
         const commentsList = document.createElement('ul');
         task.comments.forEach((comment) => {
           const commentItem = document.createElement('li');
-          commentItem.textContent = comment.text;
+          commentItem.textContent = comment;
           commentsList.appendChild(commentItem);
         });
         commentsCell.appendChild(commentsList);
@@ -170,7 +170,7 @@ function displayFilterResults(tasks) {
 
     // Add ID column
     const idCell = row.insertCell(0);
-    idCell.textContent = task._id;
+    idCell.textContent = task.id;
 
     // Add Title column
     const titleCell = row.insertCell(1);
@@ -186,7 +186,7 @@ function displayFilterResults(tasks) {
       const commentsList = document.createElement('ul');
       task.comments.forEach((comment) => {
         const commentItem = document.createElement('li');
-        commentItem.textContent = comment.text;
+        commentItem.textContent = comment;
         commentsList.appendChild(commentItem);
       });
       commentsCell.appendChild(commentsList);

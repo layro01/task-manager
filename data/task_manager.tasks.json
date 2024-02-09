@@ -1,12 +1,17 @@
 [
   {
-    "title": "Test Import 3",
-    "description": "Test Import 3",
-    "comments": [ {"text": "Comment 3-1"} ]
+    "title": "Task 1",
+    "description": "Description for Task 1",
+    "comments": ["Comment 1", "Comment 2"]
   },
   {
-    "title": "Test Import 4",
-    "description": "Test Import 4",
-    "comments": [ { "text": "Comment 4-1" } ]
+    "title": "Task 2",
+    "description": "Description for Task 2",
+    "comments": ["Comment 3", "Comment 4"]
+  },
+  {
+    "title": "Task 3",
+    "description": "Description for Task 3",
+    "comments": ["Comment 5", "Comment 6"]
   }
 ]

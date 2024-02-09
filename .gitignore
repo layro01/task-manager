@@ -1,6 +1,7 @@
 scanoss-tmp
 results.json
 *.zip
+tmp
 
 # Logs
 logs
