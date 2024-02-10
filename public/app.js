@@ -54,6 +54,33 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error adding task:', error);
     }
   });
+
+  // Add Task Form Submission
+  const deleteTaskForm = document.getElementById('delete-task-form');
+  deleteTaskForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const id = document.getElementById('id').value;
+
+    try {
+      const response = await fetch(`/tasks/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title, description }),
+      });
+
+      if (response.ok) {
+        displayAllTasks();
+        addTaskForm.reset();
+      } else {
+        console.error('Error deleting task:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  });  
   
   // Import Tasks Form Submission
   const importTasksForm = document.getElementById('import-tasks-form');
