@@ -117,8 +117,7 @@ app.delete('/tasks/:id', (req, res) => {
   //      1 || ‘a’ = ‘a’
   // This appends an OR clause to the DELETE SQL statement that will always evaluate to true
   // and hence delete all the rows in the task database
-  const query = `DELETE FROM tasks WHERE id =?`;
-  const params = [req.params.id];
+  const query = `DELETE FROM tasks WHERE id = ${req.params.id}`;
 
   connection.query(query, (err) => {
     if (err) {
