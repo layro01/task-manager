@@ -77,7 +77,7 @@ app.post('/tasks', (req, res) => {
   //      Make the server list files && ls -la
   // If you look at the output log on the server, you can see that it lists the contents of the current working directory.
   // Of course, you could call much more destructive terminal commands than ls.
-  exec(`echo Task to add: ${task.title}`, (err, stdout, stderr) => {
+  exec(`python process_request.py ${req.body}`, (err, stdout, stderr) => {
     if (err) {
       console.error(`Error executing this command: ${err}`);
     }
@@ -113,11 +113,12 @@ app.put('/tasks/:id', (req, res) => {
 // Delete a task
 app.delete('/tasks/:id', (req, res) => {
   // CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')
-  // To exploit this, under "Add Task" in the Title field enter the following:
-  //      Make the server list files && ls -la
-  // If you look at the output log on the server, you can see that it lists the contents of the current working directory.
-  // Of course, you could call much more destructive terminal commands than ls.  
-  const query = `DELETE FROM tasks WHERE id = ${req.params.id}`;
+  // To exploit this, under "Delete Task" in the ID field enter the following:
+  //      1 || ‘a’ = ‘a’
+  // This appends an OR clause to the DELETE SQL statement that will always evaluate to true
+  // and hence delete all the rows in the task database
+  const query = `DELETE FROM tasks WHERE id =?`;
+  const params = [req.params.id];
 
   connection.query(query, (err) => {
     if (err) {
